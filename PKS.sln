@@ -1,0 +1,41 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAnalyzer", "NetworkAnalyzer\NetworkAnalyzer.csproj", "{BB0C7D6A-DC26-7249-9C0F-9369AEB624B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfHttpApp", "WpfHttpApp\WpfHttpApp.csproj", "{1997A03C-D453-3A10-D8E4-35B9B5A33F45}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WpfHttpApp (1)", "WpfHttpApp (1)", "{C00C2E48-94F9-C6E3-0EAF-A8EFE3AEF318}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfHttpApp", "WpfHttpApp\WpfHttpApp\WpfHttpApp.csproj", "{7895F547-25A1-5F79-5DE3-4830225CE5FC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB0C7D6A-DC26-7249-9C0F-9369AEB624B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB0C7D6A-DC26-7249-9C0F-9369AEB624B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB0C7D6A-DC26-7249-9C0F-9369AEB624B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB0C7D6A-DC26-7249-9C0F-9369AEB624B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1997A03C-D453-3A10-D8E4-35B9B5A33F45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1997A03C-D453-3A10-D8E4-35B9B5A33F45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1997A03C-D453-3A10-D8E4-35B9B5A33F45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1997A03C-D453-3A10-D8E4-35B9B5A33F45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7895F547-25A1-5F79-5DE3-4830225CE5FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7895F547-25A1-5F79-5DE3-4830225CE5FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7895F547-25A1-5F79-5DE3-4830225CE5FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7895F547-25A1-5F79-5DE3-4830225CE5FC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7895F547-25A1-5F79-5DE3-4830225CE5FC} = {C00C2E48-94F9-C6E3-0EAF-A8EFE3AEF318}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9FDF6474-27BF-4675-8B8C-32F178917A9B}
+	EndGlobalSection
+EndGlobal

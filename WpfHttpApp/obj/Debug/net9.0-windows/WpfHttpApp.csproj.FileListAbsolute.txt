@@ -1,0 +1,7 @@
+C:\Users\nolik\Desktop\PKS\WpfHttpApp\obj\Debug\net9.0-windows\WpfHttpApp.csproj.AssemblyReference.cache
+C:\Users\nolik\Desktop\PKS\WpfHttpApp\obj\Debug\net9.0-windows\WpfHttpApp\App.g.cs
+C:\Users\nolik\Desktop\PKS\WpfHttpApp\obj\Debug\net9.0-windows\WpfHttpApp\MainWindow.g.cs
+C:\Users\nolik\Desktop\PKS\WpfHttpApp\obj\Debug\net9.0-windows\App.g.cs
+C:\Users\nolik\Desktop\PKS\WpfHttpApp\obj\Debug\net9.0-windows\WpfHttpApp_MarkupCompile.cache
+C:\Users\nolik\Desktop\PKS\WpfHttpApp\obj\Debug\net9.0-windows\WpfHttpApp_MarkupCompile.lref
+C:\Users\nolik\Desktop\PKS\WpfHttpApp\obj\Debug\net9.0-windows\GeneratedInternalTypeHelper.g.cs
