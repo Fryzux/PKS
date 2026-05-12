@@ -1,0 +1,82 @@
+@model TouristGuide.ViewModels.AttractionEditViewModel
+
+@{
+    ViewData["Title"] = "Добавить достопримечательность";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card form-card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Добавить достопримечательность</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <input type="hidden" asp-for="CityId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="BriefDescription" class="form-label"></label>
+                        <input asp-for="BriefDescription" class="form-control" />
+                        <span asp-validation-for="BriefDescription" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="History" class="form-label"></label>
+                        <textarea asp-for="History" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="History" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="OpeningHours" class="form-label"></label>
+                            <input asp-for="OpeningHours" class="form-control" placeholder="Пн-Пт: 9:00–18:00" />
+                            <span asp-validation-for="OpeningHours" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Cost" class="form-label"></label>
+                            <input asp-for="Cost" class="form-control" placeholder="500 руб. / Бесплатно" />
+                            <span asp-validation-for="Cost" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="PhotoFile" class="form-label">Выберите фотографию</label>
+                        <input asp-for="PhotoFile" class="form-control" type="file" accept="image/*" id="photoInput" />
+                        <div class="form-text">Поддерживаются форматы: JPG, PNG, WEBP.</div>
+                        <span asp-validation-for="PhotoFile" class="text-danger"></span>
+                        <div class="mt-2">
+                            <img id="preview" src="#" alt="Предпросмотр" class="img-thumbnail d-none" style="max-height: 200px;">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-controller="Cities" asp-action="Details" asp-route-id="@Model.CityId" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> К городу
+                        </a>
+                        <button type="submit" class="btn btn-success px-5">Создать</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        photoInput.onchange = evt => {
+            const [file] = photoInput.files
+            if (file) {
+                preview.src = URL.createObjectURL(file)
+                preview.classList.remove('d-none')
+            }
+        }
+    </script>
+}

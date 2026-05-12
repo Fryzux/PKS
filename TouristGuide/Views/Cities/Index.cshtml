@@ -1,0 +1,67 @@
+@model IEnumerable<TouristGuide.Models.City>
+
+@{
+    ViewData["Title"] = "Список городов";
+}
+
+<div class="page-hero d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="mb-1"><i class="bi bi-compass-fill me-2"></i>Путеводитель по городам</h1>
+        <p class="mb-0">Откройте для себя лучшие города России</p>
+    </div>
+    <a asp-action="Create" class="btn btn-warning fw-bold shadow px-4 py-2">
+        <i class="bi bi-plus-circle me-1"></i> Добавить город
+    </a>
+</div>
+
+<div class="card search-card mb-4">
+    <div class="card-body py-3">
+        <form asp-controller="Cities" asp-action="Index" method="get">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" name="SearchString" value="@ViewData["SearchString"]" class="form-control border-start-0 ps-0" placeholder="Поиск города по названию..." />
+                <button type="submit" class="btn btn-primary px-4">Найти</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    @foreach (var item in Model) {
+        <div class="col-md-4">
+            <div class="card city-card h-100">
+                <div class="card-img-wrapper">
+                    <img src="@(string.IsNullOrEmpty(item.PhotoUrl) ? "/images/no-image.jpg" : item.PhotoUrl)"
+                         alt="@item.Name">
+                    <div class="img-overlay"></div>
+                    @if (!string.IsNullOrEmpty(item.CoatOfArmsUrl))
+                    {
+                        <img src="@item.CoatOfArmsUrl" class="coat-badge" alt="Герб">
+                    }
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">@item.Name</h5>
+                    <div class="city-meta mb-3">
+                        <div><i class="bi bi-geo-alt-fill text-danger me-1"></i>@item.Region</div>
+                        <div><i class="bi bi-people-fill text-primary me-1"></i>@item.Population.ToString("N0") чел.</div>
+                    </div>
+                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary btn-sm px-3">
+                            Подробнее
+                        </a>
+                        <div class="d-flex gap-1">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-icon" title="Редактировать">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-icon" title="Удалить">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,92 @@
+@model TouristGuide.ViewModels.CityEditViewModel
+
+@{
+    ViewData["Title"] = "Редактировать город";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card form-card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Редактировать город: @Model.Name</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Region" class="form-label"></label>
+                            <input asp-for="Region" class="form-control" />
+                            <span asp-validation-for="Region" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Population" class="form-label"></label>
+                            <input asp-for="Population" class="form-control" />
+                            <span asp-validation-for="Population" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CoatOfArmsUrl" class="form-label"></label>
+                            <input asp-for="CoatOfArmsUrl" class="form-control" placeholder="https://..." />
+                            <span asp-validation-for="CoatOfArmsUrl" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="History" class="form-label"></label>
+                        <textarea asp-for="History" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="History" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="PhotoFile" class="form-label">Изменить фотографию</label>
+                        <input asp-for="PhotoFile" class="form-control" type="file" accept="image/*" id="photoInput" />
+                        <span asp-validation-for="PhotoFile" class="text-danger"></span>
+                        
+                        <div class="mt-3">
+                            <label class="form-label d-block">Текущая фотография:</label>
+                            @if (!string.IsNullOrEmpty(Model.ExistingPhotoUrl))
+                            {
+                                <img id="preview" src="@Model.ExistingPhotoUrl" alt="Предпросмотр" class="img-thumbnail" style="max-height: 200px;">
+                            }
+                            else
+                            {
+                                <img id="preview" src="/images/no-image.jpg" alt="Предпросмотр" class="img-thumbnail" style="max-height: 200px;">
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between border-top pt-3">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> К списку
+                        </a>
+                        <button type="submit" class="btn btn-primary px-5">
+                            Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        photoInput.onchange = evt => {
+            const [file] = photoInput.files
+            if (file) {
+                preview.src = URL.createObjectURL(file)
+            }
+        }
+    </script>
+}

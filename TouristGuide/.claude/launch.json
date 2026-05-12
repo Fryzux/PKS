@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "touristguide",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "C:/Users/nolik/Desktop/PKS/TouristGuide"],
+      "port": 5243
+    }
+  ]
+}

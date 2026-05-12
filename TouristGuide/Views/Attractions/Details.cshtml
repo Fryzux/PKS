@@ -1,0 +1,80 @@
+@model TouristGuide.Models.Attraction
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Cities" asp-action="Index">Города</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Cities" asp-action="Details" asp-route-id="@Model.CityId">@Model.City.Name</a></li>
+        <li class="breadcrumb-item active">@Model.Name</li>
+    </ol>
+</nav>
+
+<div class="card detail-card mb-4">
+    <div class="card-body p-4">
+        <div class="row g-4">
+            <div class="col-md-7">
+                <h1 class="fw-bold mb-1">@Model.Name</h1>
+                <p class="text-muted mb-3">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                    <a asp-controller="Cities" asp-action="Details" asp-route-id="@Model.CityId"
+                       class="text-decoration-none fw-semibold">@Model.City.Name</a>
+                </p>
+
+                @if (!string.IsNullOrEmpty(Model.BriefDescription))
+                {
+                    <p class="fs-5 text-secondary lh-lg mb-4">@Model.BriefDescription</p>
+                }
+
+                <hr />
+
+                @if (!string.IsNullOrEmpty(Model.History))
+                {
+                    <h5 class="section-title mb-3">История</h5>
+                    <p class="text-secondary lh-lg">@Model.History</p>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.OpeningHours) || !string.IsNullOrEmpty(Model.Cost))
+                {
+                    <div class="info-box mt-4">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Информация для посетителей</h6>
+                        @if (!string.IsNullOrEmpty(Model.OpeningHours))
+                        {
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-clock-fill text-primary me-2"></i>
+                                <span><strong>Часы работы:</strong> @Model.OpeningHours</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Cost))
+                        {
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-ticket-perforated-fill text-success me-2"></i>
+                                <span><strong>Стоимость:</strong> @Model.Cost</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <div class="mt-4 d-flex flex-wrap gap-2">
+                    <a asp-controller="Cities" asp-action="Details" asp-route-id="@Model.CityId"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Назад к городу
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Редактировать
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>Удалить
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-md-5 text-center mt-3 mt-md-0">
+                <img src="@(string.IsNullOrEmpty(Model.PhotoUrl) ? "/images/no-image.jpg" : Model.PhotoUrl)"
+                     alt="@Model.Name" class="detail-hero-img" />
+            </div>
+        </div>
+    </div>
+</div>

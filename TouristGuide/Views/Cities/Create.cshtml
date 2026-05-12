@@ -1,0 +1,84 @@
+@model TouristGuide.ViewModels.CityEditViewModel
+
+@{
+    ViewData["Title"] = "Добавить город";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card form-card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Добавить новый город</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Region" class="form-label"></label>
+                            <input asp-for="Region" class="form-control" />
+                            <span asp-validation-for="Region" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Population" class="form-label"></label>
+                            <input asp-for="Population" class="form-control" />
+                            <span asp-validation-for="Population" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CoatOfArmsUrl" class="form-label"></label>
+                            <input asp-for="CoatOfArmsUrl" class="form-control" placeholder="https://..." />
+                            <span asp-validation-for="CoatOfArmsUrl" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="History" class="form-label"></label>
+                        <textarea asp-for="History" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="History" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="PhotoFile" class="form-label">Выберите фотографию города</label>
+                        <input asp-for="PhotoFile" class="form-control" type="file" accept="image/*" id="photoInput" />
+                        <div class="form-text">Поддерживаются форматы: JPG, PNG, WEBP.</div>
+                        <span asp-validation-for="PhotoFile" class="text-danger"></span>
+                        <div class="mt-2">
+                            <img id="preview" src="#" alt="Предпросмотр" class="img-thumbnail d-none" style="max-height: 200px;">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> К списку
+                        </a>
+                        <button type="submit" class="btn btn-success px-5">
+                            Создать
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        photoInput.onchange = evt => {
+            const [file] = photoInput.files
+            if (file) {
+                preview.src = URL.createObjectURL(file)
+                preview.classList.remove('d-none')
+            }
+        }
+    </script>
+}
