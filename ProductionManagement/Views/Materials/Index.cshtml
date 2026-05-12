@@ -1,0 +1,266 @@
+@model IEnumerable<ProductionManagement.Models.Material>
+@{
+    ViewData["Title"] = "Материалы";
+    var totalCount = Model.Count();
+    var lowStockCount = Model.Count(m => m.IsLowStock);
+}
+
+<!-- Stats Bar -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded p-2" style="background: #eef2ff; color: var(--primary);">
+                    <i class="bi bi-bricks fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Всего материалов</div>
+                    <div class="fs-4 fw-bold">@totalCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded p-2" style="background: #fef2f2; color: var(--danger);">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Низкий запас</div>
+                    <div class="fs-4 fw-bold text-danger">@lowStockCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded p-2" style="background: #ecfdf5; color: var(--success);">
+                    <i class="bi bi-check-circle-fill fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">В норме</div>
+                    <div class="fs-4 fw-bold text-success">@(totalCount - lowStockCount)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Header -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-bricks text-primary"></i>
+            <span>Склад материалов</span>
+        </div>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="bi bi-plus-lg"></i> Добавить материал
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Количество</th>
+                    <th>Ед.изм.</th>
+                    <th>Мин. запас</th>
+                    <th>Статус</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded p-2" style="background: @(m.IsLowStock ? "#fef2f2" : "#f0fdf4"); color: @(m.IsLowStock ? "#991b1b" : "#166534");">
+                                    <i class="bi bi-box-fill"></i>
+                                </div>
+                                <div class="fw-semibold">@m.Name</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="quantity-indicator @(m.IsLowStock ? "low" : "normal")">
+                                <i class="bi bi-@(m.IsLowStock ? "arrow-down" : "check-circle")"></i>
+                                @m.Quantity
+                            </span>
+                        </td>
+                        <td class="text-muted">@m.UnitOfMeasure</td>
+                        <td class="text-muted">@m.MinimalStock</td>
+                        <td>
+                            @if (m.IsLowStock)
+                            {
+                                <span class="status-badge cancelled">Пополнить</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge active">В норме</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-icon"
+                                        data-id="@m.Id" data-name="@m.Name" data-min="@m.MinimalStock"
+                                        onclick="replenish(this)" title="Пополнить">
+                                    <i class="bi bi-plus-lg text-success"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-icon"
+                                        data-id="@m.Id" data-name="@m.Name" data-qty="@m.Quantity" data-unit="@m.UnitOfMeasure" data-min="@m.MinimalStock"
+                                        onclick="editMaterial(this)" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="post" asp-action="Delete" style="display:inline"
+                                      onsubmit="return confirm('Удалить материал?')">
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="btn btn-outline-secondary btn-icon" title="Удалить">
+                                        <i class="bi bi-trash text-danger"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                                <div>Материалы не добавлены</div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle-fill text-primary"></i> Новый материал</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Create">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input name="Name" class="form-control" required placeholder="Например: Сталь листовая" />
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">Количество</label>
+                            <input name="Quantity" type="number" step="0.001" min="0" class="form-control" value="0" required />
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Ед.изм.</label>
+                            <select name="UnitOfMeasure" class="form-select">
+                                <option>шт</option><option>кг</option><option>литр</option><option>м</option><option>м²</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Минимальный запас</label>
+                        <input name="MinimalStock" type="number" step="0.001" min="0" class="form-control" value="0" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square text-primary"></i> Редактировать материал</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Edit">
+                <div class="modal-body">
+                    <input type="hidden" id="editId" name="Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input id="editName" name="Name" class="form-control" required />
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">Количество</label>
+                            <input id="editQty" name="Quantity" type="number" step="0.001" min="0" class="form-control" required />
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Ед.изм.</label>
+                            <input id="editUnit" name="UnitOfMeasure" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Минимальный запас</label>
+                        <input id="editMin" name="MinimalStock" type="number" step="0.001" min="0" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Replenish Modal -->
+<div class="modal fade" id="replenishModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle-fill text-success"></i> Пополнить запас</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Replenish">
+                <div class="modal-body">
+                    <input type="hidden" id="repId" name="id" />
+                    <div class="alert alert-info py-2 mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        <span id="repName" class="fw-semibold"></span>
+                    </div>
+                    <label class="form-label">Добавить количество</label>
+                    <input id="repAmount" name="amount" type="number" step="0.001" min="0.001" class="form-control" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Пополнить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function editMaterial(btn) {
+    document.getElementById('editId').value = btn.dataset.id;
+    document.getElementById('editName').value = btn.dataset.name;
+    document.getElementById('editQty').value = btn.dataset.qty;
+    document.getElementById('editUnit').value = btn.dataset.unit;
+    document.getElementById('editMin').value = btn.dataset.min;
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+function replenish(btn) {
+    document.getElementById('repId').value = btn.dataset.id;
+    document.getElementById('repName').textContent = btn.dataset.name;
+    document.getElementById('repAmount').value = btn.dataset.min;
+    new bootstrap.Modal(document.getElementById('replenishModal')).show();
+}
+</script>
+}

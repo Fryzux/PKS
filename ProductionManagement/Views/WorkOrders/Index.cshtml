@@ -1,0 +1,209 @@
+@model IEnumerable<ProductionManagement.Models.WorkOrder>
+@using ProductionManagement.Models
+@{
+    ViewData["Title"] = "Производственные заказы";
+    var currentStatus = ViewBag.StatusFilter?.ToString();
+}
+
+<!-- Filter Pills -->
+<div class="card mb-4">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="filter-pills">
+            <a asp-action="Index" class="filter-pill @(currentStatus == null ? "active" : "")">
+                <i class="bi bi-grid-3x3-gap-fill"></i> Все заказы
+            </a>
+            <a asp-action="Index" asp-route-status="Pending" class="filter-pill @(currentStatus == "Pending" ? "active" : "")">
+                <i class="bi bi-clock"></i> Ожидание
+            </a>
+            <a asp-action="Index" asp-route-status="InProgress" class="filter-pill @(currentStatus == "InProgress" ? "active" : "")">
+                <i class="bi bi-play-circle-fill"></i> В работе
+            </a>
+            <a asp-action="Index" asp-route-status="Completed" class="filter-pill @(currentStatus == "Completed" ? "active" : "")">
+                <i class="bi bi-check-circle-fill"></i> Завершённые
+            </a>
+            <a asp-action="Index" asp-route-status="Cancelled" class="filter-pill @(currentStatus == "Cancelled" ? "active" : "")">
+                <i class="bi bi-x-circle-fill"></i> Отменённые
+            </a>
+        </div>
+        <a asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Создать заказ
+        </a>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-clipboard-data-fill text-primary"></i>
+        <span>Заказы</span>
+        <span class="badge bg-light text-dark">@Model.Count()</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Продукт</th>
+                    <th>Кол-во</th>
+                    <th>Линия</th>
+                    <th>Статус</th>
+                    <th>Прогресс</th>
+                    <th>Срок</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model)
+                {
+                    var barClass = o.Status == OrderStatus.Completed ? "bg-success" : "";
+                    <tr>
+                        <td>
+                            <span class="fw-semibold text-primary">#@o.Id</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded p-2" style="background: #eef2ff; color: var(--primary);">
+                                    <i class="bi bi-box-fill"></i>
+                                </div>
+                                <div class="fw-semibold">@o.Product?.Name</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">@o.Quantity шт</span>
+                        </td>
+                        <td>
+                            @if (o.ProductionLine != null)
+                            {
+                                <div class="d-flex align-items-center gap-1 small">
+                                    <i class="bi bi-cpu-fill text-muted"></i>
+                                    @o.ProductionLine.Name
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">— Не назначена</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="status-badge status-@o.Status">@OrderStatus.ToRussian(o.Status)</span>
+                            @if (o.IsOverdue)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Просрочен
+                                </span>
+                            }
+                        </td>
+                        <td style="min-width:120px">
+                            <div class="progress mb-1">
+                                <div class="progress-bar @barClass" style="width:@o.Progress%"></div>
+                            </div>
+                            <small class="text-muted">@o.Progress%</small>
+                        </td>
+                        <td class="small">
+                            <div class="d-flex align-items-center gap-1">
+                                <i class="bi bi-calendar-event text-muted"></i>
+                                @o.EstimatedEndDate.ToString("dd.MM HH:mm")
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                @if (o.Status == OrderStatus.Pending)
+                                {
+                                    @if (o.ProductionLineId == null)
+                                    {
+                                        <span class="btn btn-outline-secondary btn-icon disabled"
+                                              title="Назначьте линию для запуска" data-bs-toggle="tooltip">
+                                            <i class="bi bi-play-fill text-muted"></i>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-action="Start" asp-route-id="@o.Id" style="display:inline">
+                                            <button type="submit" class="btn btn-outline-secondary btn-icon" title="Запустить">
+                                                <i class="bi bi-play-fill text-primary"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <form method="post" asp-action="Cancel" asp-route-id="@o.Id" style="display:inline"
+                                          onsubmit="return confirm('Отменить заказ?')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-icon" title="Отменить">
+                                            <i class="bi bi-x-lg text-danger"></i>
+                                        </button>
+                                    </form>
+                                }
+                                @if (o.Status == OrderStatus.InProgress)
+                                {
+                                    <button class="btn btn-outline-secondary btn-icon"
+                                            onclick="updateProgress(@o.Id, @o.Progress)"
+                                            title="Обновить прогресс">
+                                        <i class="bi bi-percent text-primary"></i>
+                                    </button>
+                                    <form method="post" asp-action="Cancel" asp-route-id="@o.Id" style="display:inline"
+                                          onsubmit="return confirm('Отменить заказ?')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-icon" title="Отменить">
+                                            <i class="bi bi-x-lg text-danger"></i>
+                                        </button>
+                                    </form>
+                                }
+                                @if (o.Status == OrderStatus.Completed || o.Status == OrderStatus.Cancelled)
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i class="bi bi-clipboard-x"></i></div>
+                                <div>Заказы не найдены</div>
+                                <a asp-action="Create" class="btn btn-primary btn-sm mt-3">
+                                    <i class="bi bi-plus-lg"></i> Создать заказ
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-percent text-primary"></i> Обновить прогресс</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="UpdateProgress">
+                <div class="modal-body">
+                    <input type="hidden" id="progId" name="id" />
+                    <label class="form-label">Прогресс выполнения (%)</label>
+                    <input id="progVal" name="percent" type="number" min="0" max="100" class="form-control" required />
+                    <div class="form-text">Установка 100% автоматически завершит заказ</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function updateProgress(id, current) {
+    document.getElementById('progId').value = id;
+    document.getElementById('progVal').value = current;
+    new bootstrap.Modal(document.getElementById('progressModal')).show();
+}
+// Инициализируем tooltips
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+</script>
+}

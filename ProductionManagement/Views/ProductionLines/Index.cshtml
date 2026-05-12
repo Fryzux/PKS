@@ -1,0 +1,228 @@
+@model IEnumerable<ProductionManagement.Models.ProductionLine>
+@using ProductionManagement.Models
+@{
+    ViewData["Title"] = "Производственные линии";
+    var totalLines = Model.Count();
+    var activeLines = Model.Count(l => l.Status == LineStatus.Active);
+}
+
+<!-- Header with Create button -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 fw-semibold">Производственные линии</h5>
+    </div>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createLineModal">
+        <i class="bi bi-plus-lg"></i> Добавить линию
+    </button>
+</div>
+
+<!-- Stats Bar -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded p-2" style="background: #eef2ff; color: var(--primary);">
+                    <i class="bi bi-cpu-fill fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Всего линий</div>
+                    <div class="fs-4 fw-bold">@totalLines</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded p-2" style="background: #ecfdf5; color: var(--success);">
+                    <i class="bi bi-lightning-charge-fill fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Активны</div>
+                    <div class="fs-4 fw-bold text-success">@activeLines</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded p-2" style="background: #f1f5f9; color: #64748b;">
+                    <i class="bi bi-pause-circle-fill fs-4"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Остановлены</div>
+                    <div class="fs-4 fw-bold text-secondary">@(totalLines - activeLines)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Production Lines Grid -->
+<div class="row g-3">
+    @foreach (var line in Model)
+    {
+        var isActive = line.Status == LineStatus.Active;
+        var currentOrder = line.WorkOrders.FirstOrDefault(o => o.Status == OrderStatus.InProgress);
+        var pendingOrders = line.WorkOrders.Where(o => o.Status == OrderStatus.Pending).Take(3).ToList();
+
+        <div class="col-md-6 col-lg-4">
+            <div class="line-card @(isActive ? "active" : "stopped")">
+                <div class="line-header">
+                    <div class="d-flex gap-3">
+                        <div class="line-icon">
+                            <i class="bi bi-cpu-fill"></i>
+                        </div>
+                        <div>
+                            <h6 class="line-name">@line.Name</h6>
+                            <div class="line-status-text">
+                                @if (isActive)
+                                {
+                                    <span class="status-badge active">Активна</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge stopped">Остановлена</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (currentOrder is not null)
+                    {
+                        <div class="mb-3 p-3 rounded" style="background: #eff6ff; border-left: 3px solid var(--primary);">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <small class="text-muted d-block">Текущий заказ</small>
+                                    <div class="fw-semibold">@currentOrder.Product?.Name</div>
+                                </div>
+                                <span class="badge bg-primary">#@currentOrder.Id</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1 small">
+                                <span class="text-muted">@currentOrder.Quantity шт</span>
+                                <span class="fw-semibold">@currentOrder.Progress%</span>
+                            </div>
+                            <div class="progress" style="height:6px">
+                                <div class="progress-bar" style="width:@currentOrder.Progress%"></div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3 mb-3 rounded" style="background: #f8fafc;">
+                            <i class="bi bi-pause-circle text-muted fs-3 d-block mb-1"></i>
+                            <small class="text-muted">Нет активного заказа</small>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted fw-semibold">
+                                <i class="bi bi-speedometer2"></i> Эффективность
+                            </small>
+                            <span class="badge" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: #fff;">
+                                ×@line.EfficiencyFactor.ToString("0.0")
+                            </span>
+                        </div>
+                        <form method="post" asp-action="UpdateEfficiency" class="d-flex gap-2 align-items-center">
+                            <input type="hidden" name="id" value="@line.Id" />
+                            <input name="factor" type="range" min="0.5" max="2.0" step="0.1"
+                                   value="@line.EfficiencyFactor.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)"
+                                   class="form-range flex-grow-1"
+                                   oninput="document.getElementById('eff_@line.Id').textContent = parseFloat(this.value).toFixed(1)" />
+                            <span id="eff_@line.Id" class="small fw-semibold" style="min-width:30px; color: var(--primary);">@line.EfficiencyFactor.ToString("0.0")</span>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary btn-icon" title="Сохранить">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    @if (pendingOrders.Any())
+                    {
+                        <div class="mb-2">
+                            <small class="text-muted fw-semibold d-block mb-2">
+                                <i class="bi bi-calendar3"></i> Расписание
+                            </small>
+                            @foreach (var o in pendingOrders)
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-2 rounded mb-1" style="background: #f8fafc;">
+                                    <div>
+                                        <small class="fw-semibold">#@o.Id @o.Product?.Name</small>
+                                        <div class="text-muted" style="font-size: 0.7rem;">@o.Quantity шт</div>
+                                    </div>
+                                    <small class="text-muted">@o.EstimatedEndDate.ToString("dd.MM")</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer bg-white border-top-0 pt-0">
+                    <form method="post" asp-action="ToggleStatus">
+                        <input type="hidden" name="id" value="@line.Id" />
+                        <button type="submit" class="btn btn-sm w-100 @(isActive ? "btn-warning" : "btn-success")">
+                            <i class="bi bi-@(isActive ? "stop-circle-fill" : "play-circle-fill")"></i>
+                            @(isActive ? "Остановить линию" : "Запустить линию")
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="col-12">
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-cpu"></i></div>
+                    <div>Производственные линии не найдены</div>
+                    <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#createLineModal">
+                        <i class="bi bi-plus-lg"></i> Добавить первую линию
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Create Line Modal -->
+<div class="modal fade" id="createLineModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle-fill text-primary"></i> Новая производственная линия</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="Create">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название линии <span class="text-danger">*</span></label>
+                        <input name="name" class="form-control" required placeholder="Например: Линия Г - Покраска" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Коэффициент эффективности</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <input name="efficiencyFactor" id="newLineFactor" type="range"
+                                   min="0.5" max="2.0" step="0.1" value="1.0"
+                                   class="form-range flex-grow-1"
+                                   oninput="document.getElementById('newLineFactorVal').textContent = parseFloat(this.value).toFixed(1)" />
+                            <span id="newLineFactorVal" class="small fw-semibold" style="min-width:30px; color: var(--primary);">1.0</span>
+                        </div>
+                        <div class="form-text">Значение от 0.5 до 2.0. Влияет на расчётное время производства.</div>
+                    </div>
+                    <div class="alert alert-info py-2">
+                        <i class="bi bi-info-circle"></i> Линия будет создана в статусе <strong>Остановлена</strong>. Запустите её после создания.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Создать линию</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

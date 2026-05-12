@@ -1,0 +1,159 @@
+@{
+    ViewData["Title"] = "Создать заказ";
+    var products = ViewBag.Products as IEnumerable<ProductionManagement.Models.Product> ?? Enumerable.Empty<ProductionManagement.Models.Product>();
+    var lines = ViewBag.Lines as IEnumerable<ProductionManagement.Models.ProductionLine> ?? Enumerable.Empty<ProductionManagement.Models.ProductionLine>();
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Назад к заказам
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-plus-circle-fill text-primary"></i>
+                <span>Новый производственный заказ</span>
+            </div>
+            <form method="post">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-box-seam-fill"></i> Продукт <span class="text-danger">*</span>
+                        </label>
+                        <select name="productId" id="productSelect" class="form-select" required onchange="calcTime()">
+                            <option value="">— Выберите продукт —</option>
+                            @foreach (var p in products)
+                            {
+                                <option value="@p.Id" data-time="@p.ProductionTimePerUnit" data-name="@p.Name">@p.Name (@p.ProductionTimePerUnit мин/шт)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-123"></i> Количество (шт) <span class="text-danger">*</span>
+                                </label>
+                                <input name="quantity" id="quantityInput" type="number" min="1" class="form-control" value="1" required oninput="calcTime()" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-cpu-fill"></i> Производственная линия
+                                </label>
+                                <select name="lineId" id="lineSelect" class="form-select" onchange="calcTime()">
+                                    <option value="">— Не назначать —</option>
+                                    @foreach (var l in lines)
+                                    {
+                                        <option value="@l.Id" data-eff="@l.EfficiencyFactor.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)">
+                                            @l.Name (×@l.EfficiencyFactor)
+                                        </option>
+                                    }
+                                </select>
+                                <div class="form-text">Только активные линии</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> Создать заказ
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card" id="calcCard" style="display:none;">
+            <div class="card-header">
+                <i class="bi bi-calculator-fill text-primary"></i>
+                <span>Предварительный расчет</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3 p-3 rounded" style="background: #eef2ff;">
+                    <small class="text-muted">Продукт</small>
+                    <div class="fw-semibold" id="calcProduct">—</div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-3 rounded text-center" style="background: #f0fdf4;">
+                            <i class="bi bi-clock-fill" style="color: #166534;"></i>
+                            <div class="fs-5 fw-bold" id="calcMinutes" style="color: #166534;">0</div>
+                            <small class="text-muted">минут</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded text-center" style="background: #fef3c7;">
+                            <i class="bi bi-hourglass-split" style="color: #b45309;"></i>
+                            <div class="fs-5 fw-bold" id="calcHours" style="color: #b45309;">0</div>
+                            <small class="text-muted">часов</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded" style="background: #f0f9ff;">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar-event"></i> Расчётное время завершения
+                    </small>
+                    <div class="fw-semibold" id="calcDate" style="color: #075985;">—</div>
+                </div>
+
+                <hr>
+
+                <div class="alert alert-info py-2 mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    <small>Время рассчитывается с учётом коэффициента эффективности линии</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="hintCard">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-arrow-left fs-1 text-muted opacity-50"></i>
+                <p class="text-muted mt-3 mb-0">Выберите продукт, количество и линию,<br/>чтобы увидеть предварительный расчет</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function calcTime() {
+    var sel = document.getElementById('productSelect');
+    var opt = sel.selectedOptions[0];
+    var qty = parseInt(document.getElementById('quantityInput').value) || 1;
+    var lineOpt = document.getElementById('lineSelect').selectedOptions[0];
+
+    if (!opt || !opt.dataset.time) {
+        document.getElementById('calcCard').style.display = 'none';
+        document.getElementById('hintCard').style.display = 'block';
+        return;
+    }
+
+    var time = parseInt(opt.dataset.time);
+    var eff = lineOpt && lineOpt.dataset.eff ? parseFloat(lineOpt.dataset.eff) : 1.0;
+    var minutes = Math.ceil((qty * time) / eff);
+    var hours = (minutes / 60).toFixed(1);
+
+    var end = new Date();
+    end.setMinutes(end.getMinutes() + minutes);
+    var dateStr = end.toLocaleDateString('ru-RU') + ' в ' + end.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+
+    document.getElementById('calcProduct').textContent = opt.dataset.name + ' × ' + qty + ' шт';
+    document.getElementById('calcMinutes').textContent = minutes;
+    document.getElementById('calcHours').textContent = hours;
+    document.getElementById('calcDate').textContent = dateStr;
+
+    document.getElementById('calcCard').style.display = 'block';
+    document.getElementById('hintCard').style.display = 'none';
+}
+</script>
+}

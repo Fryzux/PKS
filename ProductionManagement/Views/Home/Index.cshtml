@@ -1,0 +1,231 @@
+@{
+    ViewData["Title"] = "Дашборд";
+}
+
+<!-- Auto-refresh bar -->
+<div class="d-flex justify-content-end align-items-center mb-3 gap-2">
+    <small class="text-muted">Обновление через</small>
+    <span id="refreshCountdown" class="badge bg-light text-dark border fw-semibold" style="min-width:38px; font-variant-numeric: tabular-nums;">30</span>
+    <small class="text-muted">сек</small>
+    <button id="refreshBtn" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="location.reload()" title="Обновить сейчас">
+        <i class="bi bi-arrow-clockwise"></i>
+    </button>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card primary">
+            <div class="stat-icon">
+                <i class="bi bi-clipboard-check-fill"></i>
+            </div>
+            <div class="stat-value">@ViewBag.ActiveOrders</div>
+            <div class="stat-label">Активных заказов</div>
+            <div class="stat-change" style="background: rgba(99,102,241,0.15); color: var(--primary-dark);">
+                <i class="bi bi-arrow-up-right"></i> В работе
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card success">
+            <div class="stat-icon">
+                <i class="bi bi-cpu-fill"></i>
+            </div>
+            <div class="stat-value">@ViewBag.ActiveLines</div>
+            <div class="stat-label">Линий работает</div>
+            <div class="stat-change" style="background: rgba(16,185,129,0.15); color: #047857;">
+                <i class="bi bi-lightning-charge-fill"></i> Активны
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card warning">
+            <div class="stat-icon">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <div class="stat-value">@ViewBag.LowStockCount</div>
+            <div class="stat-label">Низкий запас</div>
+            <div class="stat-change" style="background: rgba(245,158,11,0.15); color: #b45309;">
+                <i class="bi bi-bell-fill"></i> Внимание
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card info">
+            <div class="stat-icon">
+                <i class="bi bi-box-seam-fill"></i>
+            </div>
+            <div class="stat-value">@ViewBag.TotalProducts</div>
+            <div class="stat-label">Продуктов в каталоге</div>
+            <div class="stat-change" style="background: rgba(6,182,212,0.15); color: #0e7490;">
+                <i class="bi bi-collection-fill"></i> Доступны
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Orders & Low Stock -->
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-clipboard-data-fill text-primary"></i>
+                    <span>Активные заказы</span>
+                </div>
+                <a asp-controller="WorkOrders" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    Все заказы <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Продукт</th>
+                            <th>Линия</th>
+                            <th>Прогресс</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in (IEnumerable<ProductionManagement.Models.WorkOrder>)ViewBag.RecentOrders)
+                        {
+                            <tr>
+                                <td><span class="text-muted">#@o.Id</span></td>
+                                <td>
+                                    <div class="fw-semibold">@o.Product?.Name</div>
+                                    <small class="text-muted">@o.Quantity шт</small>
+                                </td>
+                                <td>
+                                    @if (o.ProductionLine != null)
+                                    {
+                                        <span class="text-secondary small">@o.ProductionLine.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
+                                <td style="min-width:140px">
+                                    <div class="progress mb-1">
+                                        <div class="progress-bar" style="width:@o.Progress%"></div>
+                                    </div>
+                                    <small class="text-muted">@o.Progress%</small>
+                                </td>
+                                <td><span class="status-badge status-@o.Status">@OrderStatus.ToRussian(o.Status)</span></td>
+                            </tr>
+                        }
+                        @if (!((IEnumerable<ProductionManagement.Models.WorkOrder>)ViewBag.RecentOrders).Any())
+                        {
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                                        <div>Нет активных заказов</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                    <span>Низкий запас</span>
+                </div>
+                <a asp-controller="Materials" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    Все материалы <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Материал</th>
+                            <th>Количество</th>
+                            <th>Минимум</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in (IEnumerable<ProductionManagement.Models.Material>)ViewBag.LowStockMaterials)
+                        {
+                            <tr>
+                                <td><div class="fw-semibold">@m.Name</div></td>
+                                <td>
+                                    <span class="quantity-indicator low">
+                                        <i class="bi bi-arrow-down"></i>
+                                        @m.Quantity @m.UnitOfMeasure
+                                    </span>
+                                </td>
+                                <td class="text-muted small">@m.MinimalStock @m.UnitOfMeasure</td>
+                            </tr>
+                        }
+                        @if (!((IEnumerable<ProductionManagement.Models.Material>)ViewBag.LowStockMaterials).Any())
+                        {
+                            <tr>
+                                <td colspan="3">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon"><i class="bi bi-check-circle text-success"></i></div>
+                                        <div>Все запасы в норме</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge-fill text-warning"></i> Быстрые действия
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-controller="WorkOrders" asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle-fill"></i> Создать заказ
+                    </a>
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-box-seam"></i> Управление продуктами
+                    </a>
+                    <a asp-controller="Materials" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-bricks"></i> Пополнить материалы
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var total = 30;
+    var remaining = total;
+    var el = document.getElementById('refreshCountdown');
+
+    var interval = setInterval(function () {
+        remaining--;
+        el.textContent = remaining;
+
+        if (remaining <= 5) {
+            el.classList.remove('bg-light', 'text-dark');
+            el.classList.add('bg-warning', 'text-dark');
+        }
+
+        if (remaining <= 0) {
+            clearInterval(interval);
+            location.reload();
+        }
+    }, 1000);
+})();
+</script>
+}
