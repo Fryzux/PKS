@@ -1,0 +1,172 @@
+@page "/products/create"
+@page "/products/edit/{Id:int}"
+@using CorporateSystem.Client.Services
+@using CorporateSystem.Shared.Models
+@inject ProductHttpService ProductService
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+
+<PageTitle>@(_isEdit ? "Редактирование" : "Новый товар") — CorporateSystem</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi @(_isEdit ? "bi-pencil-square" : "bi-plus-circle-fill")"></i>
+            @(_isEdit ? "Редактирование товара" : "Новый товар")
+        </h1>
+        <p class="subtitle">@(_isEdit ? "Измените данные товара и сохраните" : "Заполните информацию о новом товаре")</p>
+    </div>
+    <a href="/products" class="btn btn-outline">
+        <i class="bi bi-arrow-left"></i> Назад к списку
+    </a>
+</div>
+
+@if (_loading)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Загрузка...</p>
+    </div>
+}
+else
+{
+    <div class="form-container">
+        <EditForm Model="_product" OnValidSubmit="HandleSubmit" FormName="productForm">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label for="name">
+                    <i class="bi bi-tag"></i> Название товара <span class="required">*</span>
+                </label>
+                <InputText id="name" @bind-Value="_product.Name" class="form-input" placeholder="Введите название..." />
+                <ValidationMessage For="() => _product.Name" class="validation-msg" />
+            </div>
+
+            <div class="form-group">
+                <label for="description">
+                    <i class="bi bi-card-text"></i> Описание
+                </label>
+                <InputTextArea id="description" @bind-Value="_product.Description" class="form-input form-textarea" placeholder="Описание товара..." rows="4" />
+                <ValidationMessage For="() => _product.Description" class="validation-msg" />
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="price">
+                        <i class="bi bi-currency-exchange"></i> Цена (₽) <span class="required">*</span>
+                    </label>
+                    <InputNumber id="price" @bind-Value="_product.Price" class="form-input" placeholder="0.00" />
+                    <ValidationMessage For="() => _product.Price" class="validation-msg" />
+                </div>
+
+                <div class="form-group">
+                    <label for="stock">
+                        <i class="bi bi-archive"></i> Количество на складе <span class="required">*</span>
+                    </label>
+                    <InputNumber id="stock" @bind-Value="_product.StockQuantity" class="form-input" placeholder="0" />
+                    <ValidationMessage For="() => _product.StockQuantity" class="validation-msg" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="category">
+                    <i class="bi bi-folder"></i> Категория
+                </label>
+                <InputText id="category" @bind-Value="_product.Category" class="form-input" placeholder="Например: Электроника" />
+                <ValidationMessage For="() => _product.Category" class="validation-msg" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="form-error">
+                    <i class="bi bi-x-circle"></i> @_errorMessage
+                </div>
+            }
+
+            <div class="form-actions">
+                <a href="/products" class="btn btn-outline">Отмена</a>
+                <button type="submit" class="btn btn-accent" disabled="@_saving">
+                    @if (_saving)
+                    {
+                        <span class="spinner-sm"></span>
+                        <span>Сохранение...</span>
+                    }
+                    else
+                    {
+                        <i class="bi @(_isEdit ? "bi-check-lg" : "bi-plus-lg")"></i>
+                        <span>@(_isEdit ? "Сохранить изменения" : "Создать товар")</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Product _product = new();
+    private bool _isEdit;
+    private bool _loading;
+    private bool _saving;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isEdit = Id.HasValue;
+
+        if (_isEdit)
+        {
+            _loading = true;
+            try
+            {
+                var product = await ProductService.GetByIdAsync(Id!.Value);
+                if (product != null)
+                {
+                    _product = product;
+                }
+                else
+                {
+                    Navigation.NavigateTo("/products");
+                }
+            }
+            catch
+            {
+                Navigation.NavigateTo("/products");
+            }
+            finally
+            {
+                _loading = false;
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        _saving = true;
+        _errorMessage = null;
+
+        try
+        {
+            if (_isEdit)
+            {
+                await ProductService.UpdateAsync(_product);
+            }
+            else
+            {
+                await ProductService.CreateAsync(_product);
+            }
+
+            Navigation.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Ошибка сохранения: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

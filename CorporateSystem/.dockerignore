@@ -1,0 +1,14 @@
+**/.git
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/node_modules
+**/out
+**/.dockerignore
+**/Dockerfile
+**/*.md
+**/*.user
+**/corporate.db
+**/corporate.db-shm
+**/corporate.db-wal

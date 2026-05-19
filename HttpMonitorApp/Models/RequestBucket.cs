@@ -1,12 +1,16 @@
 using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace WpfHttpApp.Models
 {
     /// <summary>Request count bucket for per-minute/per-hour chart.</summary>
-    public class RequestBucket
+    public partial class RequestBucket : ObservableObject
     {
         public DateTime Time { get; init; }
-        public int Count { get; set; }
+
+        [ObservableProperty]
+        private int _count;
+
         public string Label => Time.ToString("HH:mm");
     }
 }

@@ -1,0 +1,141 @@
+@page "/products/{Id:int}"
+@using CorporateSystem.Client.Services
+@using CorporateSystem.Shared.Models
+@inject ProductHttpService ProductService
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+
+<PageTitle>@(_product?.Name ?? "Товар") — CorporateSystem</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-box-seam"></i> Карточка товара</h1>
+    </div>
+    <a href="/products" class="btn btn-outline">
+        <i class="bi bi-arrow-left"></i> Назад к списку
+    </a>
+</div>
+
+@if (_loading)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Загрузка товара...</p>
+    </div>
+}
+else if (_product == null)
+{
+    <div class="empty-state">
+        <i class="bi bi-question-circle"></i>
+        <h3>Товар не найден</h3>
+        <a href="/products" class="btn btn-accent">Вернуться к списку</a>
+    </div>
+}
+else
+{
+    <div class="detail-card">
+        <div class="detail-header">
+            <div>
+                <span class="category-badge large">@(_product.Category ?? "Без категории")</span>
+                <h2>@_product.Name</h2>
+            </div>
+            <div class="detail-price">@_product.Price.ToString("N2") ₽</div>
+        </div>
+
+        <div class="detail-body">
+            <div class="detail-section">
+                <h4><i class="bi bi-card-text"></i> Описание</h4>
+                <p>@(_product.Description ?? "Описание отсутствует")</p>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-archive"></i> На складе</span>
+                    <span class="detail-value @(_product.StockQuantity > 0 ? "text-success" : "text-danger")">
+                        @_product.StockQuantity шт.
+                    </span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-calendar3"></i> Добавлен</span>
+                    <span class="detail-value">@_product.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-hash"></i> ID</span>
+                    <span class="detail-value">@_product.Id</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-actions">
+            <a href="@($"/products/edit/{_product.Id}")" class="btn btn-accent">
+                <i class="bi bi-pencil"></i> Редактировать
+            </a>
+            <button class="btn btn-danger" @onclick="ShowDeleteConfirm">
+                <i class="bi bi-trash"></i> Удалить
+            </button>
+        </div>
+    </div>
+}
+
+@if (_showConfirm)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <div class="modal-header-custom">
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                <h3>Подтвердите удаление</h3>
+            </div>
+            <p>Вы действительно хотите удалить товар <strong>«@_product?.Name»</strong>?</p>
+            <p class="text-muted">Это действие нельзя отменить.</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" @onclick="CancelDelete">Отмена</button>
+                <button class="btn btn-danger" @onclick="ConfirmDelete">
+                    <i class="bi bi-trash"></i> Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product? _product;
+    private bool _loading = true;
+    private bool _showConfirm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _product = await ProductService.GetByIdAsync(Id);
+        }
+        catch
+        {
+            _product = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ShowDeleteConfirm() => _showConfirm = true;
+    private void CancelDelete() => _showConfirm = false;
+
+    private async Task ConfirmDelete()
+    {
+        if (_product == null) return;
+
+        try
+        {
+            await ProductService.DeleteAsync(_product.Id);
+            Navigation.NavigateTo("/products");
+        }
+        catch
+        {
+            _showConfirm = false;
+        }
+    }
+}

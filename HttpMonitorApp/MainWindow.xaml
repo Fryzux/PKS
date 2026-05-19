@@ -96,6 +96,13 @@
             <Setter Property="BorderBrush"  Value="#30363D"/>
             <Setter Property="Padding"      Value="8,5"/>
             <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="Height"       Value="32"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Style.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#161B22" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="#E6EDF3" />
+            </Style.Resources>
         </Style>
 
         <!-- ═══ TAB ════════════════════════════════════════════════════════ -->

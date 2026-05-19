@@ -1,0 +1,176 @@
+@page "/products"
+@using CorporateSystem.Client.Services
+@using CorporateSystem.Shared.Models
+@inject ProductHttpService ProductService
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+
+<PageTitle>Товары — CorporateSystem</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-box-seam-fill"></i> Каталог товаров</h1>
+        <p class="subtitle">Управление ассортиментом продукции</p>
+    </div>
+    <a href="/products/create" class="btn btn-accent">
+        <i class="bi bi-plus-circle"></i> Добавить товар
+    </a>
+</div>
+
+@if (_loading)
+{
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Загрузка товаров...</p>
+    </div>
+}
+else if (_products == null || !_products.Any())
+{
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h3>Товаров пока нет</h3>
+        <p>Добавьте первый товар, нажав кнопку выше</p>
+    </div>
+}
+else
+{
+    <div class="stats-bar">
+        <div class="stat-card">
+            <i class="bi bi-box-seam"></i>
+            <div>
+                <span class="stat-value">@_products.Count</span>
+                <span class="stat-label">Всего товаров</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-currency-exchange"></i>
+            <div>
+                <span class="stat-value">@_products.Sum(p => p.Price).ToString("N0") ₽</span>
+                <span class="stat-label">Общая стоимость</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <i class="bi bi-archive"></i>
+            <div>
+                <span class="stat-value">@_products.Sum(p => p.StockQuantity)</span>
+                <span class="stat-label">Единиц на складе</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="products-grid">
+        @foreach (var product in _products)
+        {
+            <div class="product-card">
+                <div class="product-card-header">
+                    <span class="category-badge">@(product.Category ?? "Без категории")</span>
+                    <span class="stock-badge @(product.StockQuantity > 0 ? "in-stock" : "out-of-stock")">
+                        @(product.StockQuantity > 0 ? $"В наличии: {product.StockQuantity}" : "Нет в наличии")
+                    </span>
+                </div>
+                <h3 class="product-name">@product.Name</h3>
+                <p class="product-description">@(product.Description?.Length > 100 ? product.Description[..100] + "..." : product.Description)</p>
+                <div class="product-price">@product.Price.ToString("N2") ₽</div>
+                <div class="product-actions">
+                    <a href="@($"/products/{product.Id}")" class="btn btn-sm btn-outline" title="Подробнее">
+                        <i class="bi bi-eye"></i> Подробнее
+                    </a>
+                    <a href="@($"/products/edit/{product.Id}")" class="btn btn-sm btn-outline" title="Редактировать">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-sm btn-danger-outline" @onclick="() => ShowDeleteConfirm(product)" title="Удалить">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (_showConfirm)
+{
+    <div class="modal-overlay" @onclick="CancelDelete">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <div class="modal-header-custom">
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                <h3>Подтвердите удаление</h3>
+            </div>
+            <p>Вы действительно хотите удалить товар <strong>«@_productToDelete?.Name»</strong>?</p>
+            <p class="text-muted">Это действие нельзя отменить.</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" @onclick="CancelDelete">Отмена</button>
+                <button class="btn btn-danger" @onclick="ConfirmDelete">
+                    <i class="bi bi-trash"></i> Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="toast-error">
+        <i class="bi bi-x-circle"></i> @_errorMessage
+        <button class="toast-close" @onclick="() => _errorMessage = null">×</button>
+    </div>
+}
+
+@code {
+    private List<Product>? _products;
+    private bool _loading = true;
+    private bool _showConfirm;
+    private Product? _productToDelete;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            _loading = true;
+            _products = await ProductService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Ошибка загрузки: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ShowDeleteConfirm(Product product)
+    {
+        _productToDelete = product;
+        _showConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        _showConfirm = false;
+        _productToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (_productToDelete == null) return;
+
+        try
+        {
+            await ProductService.DeleteAsync(_productToDelete.Id);
+            _showConfirm = false;
+            _productToDelete = null;
+            await LoadProducts();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Ошибка удаления: {ex.Message}";
+            _showConfirm = false;
+        }
+    }
+}
